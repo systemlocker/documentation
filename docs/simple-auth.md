@@ -14,7 +14,7 @@ Goliath is the default account-based API. Send requests to `https://systemlocker
 
 `username` - The customer's System Locker username.
 
-`password` - The customer's System Locker password.
+`password` - The customer's System Locker password. For a Google account, send the system-specific password created through the Google SSO flow below.
 
 `hwid` - A machine identifier used for your hardware-locking rules. If you do not want hardware locking, send a consistent application value such as `1`.
 
@@ -46,13 +46,21 @@ Goliath is the default account-based API. Send requests to `https://systemlocker
 
 `digest` - The Program Hash is missing or does not match.
 
-Google-account customers can receive `sso [LINK]`, `ssoexp [LINK]`, or `ssowrong [LINK]`. Open the supplied link so the customer can complete sign-in and receive the temporary password token to use in later requests.
+### Google SSO account password
+
+Google accounts use a system-specific password instead of a normal System Locker password. Your client must recognize these Google SSO responses before treating a plain-text response as an ordinary authentication failure:
+
+`sso [LINK]` - No password has been created for this account and system.
+
+`ssoexp [LINK]` - The previous system password has expired.
+
+`ssowrong [LINK]` - An active system password exists, but the supplied password does not match it.
+
+In each case, extract the complete URL after the first space and let the customer open it. After they sign in with Google, the page displays a password for that system. Submit that password as `password` with the same `username` and `system`, then retry the original request. The password expires after 180 days, works only for the system named in the link, and is replaced when the customer completes Google sign-in again. Do not reuse it for another system or write it to logs.
 
 ### Mikros
 
 Mikros is the license-key API and is available on every plan. Send requests to `https://systemlocker.net/auth/mikros`.
-
-The [Mikros PDF](https://systemlocker.net/documentation/downloads/mikros.pdf) is also available.
 
 #### Request body
 

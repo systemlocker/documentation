@@ -14,6 +14,8 @@ The documentation is split into focused pages:
 
 Every request to System Locker APIs must be an [HTTP POST request](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST). Body parameters vary by endpoint.
 
+Account authentication supports Google SSO on Goliath, Quicksilver, and Bedrock. Libraries must surface the SSO link, obtain the resulting system-specific password from the customer, and retry authentication as described in [Simple Auth](docs/simple-auth.md#google-sso-account-password) and [Bedrock](docs/bedrock.md).
+
 ## Client libraries
 
 Official client libraries that implement these APIs:

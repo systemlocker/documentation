@@ -10,7 +10,7 @@ Use POST https://systemlocker.net/auth/bedrock/init to initialize a session, the
 
 ### Initialization request
 
-Send either `username` and `password` for account authentication, or `key` for key-only authentication. Do not send both forms of credentials together.
+Send either `username` and `password` for account authentication, or `key` for key-only authentication. Do not send both forms of credentials together. Google accounts use a system-specific password created through Google SSO, not a normal account password.
 
 `system` - Your 20-character system ID.
 
@@ -22,7 +22,7 @@ Send either `username` and `password` for account authentication, or `key` for k
 
 `digest` - Required when the system has a Program Hash configured. It must exactly match the configured value.
 
-`challenge` - A fresh client-generated random string, 64 through 100 characters long. Generate a new challenge for every request.
+`challenge` - A fresh client-generated random printable-ASCII string, 64 through 100 characters long. Generate a new challenge for every request. We recommend encoding it as base64 or hex. Outside of retries, a challenge can be submitted only once across Bedrock, including across different systems, over a period of time. This enhances replay protection.
 
 `init-if` - Optional boolean. Send `true` to create a short-lived Invisible Folder token for the successful request.
 
@@ -40,13 +40,15 @@ When requested, successful responses also include `invisible_folder_token` and t
 
 Check `response_code` rather than assuming any signed response authorizes access. Common values include `INVALID_CREDENTIALS`, `INVALID_KEY`, `HWID_MISMATCH`, `EXPIRED_KEY`, `PROGRAM_DIGEST_MISMATCH`, and `PRODUCTION_AUTH_UNAVAILABLE`.
 
+`GOOGLE_SSO_REQUIRED` is a signed, non-authorizing response for a Google account. It includes `sso_url`. After signature verification, open that URL for the customer. When they complete Google sign-in, the page displays a password for the requested system. Submit that value as `password` and begin a new initialization with a fresh challenge. The password is system-specific, expires after 180 days, and is replaced when the customer signs in through the SSO link again.
+
 ### Heartbeat request and response
 
 Send `session_token`, `system`, and a fresh `challenge` to `POST https://systemlocker.net/auth/bedrock/beat` at the accepted heartbeat interval. Use the replacement `session_token` from every successful response for the next heartbeat.
 
 Set `init-if` to `true` to receive a new short-lived `invisible_folder_token` in a successful heartbeat response.
 
-If a response is lost, repeat the immediately previous token with the same challenge during the next heartbeat interval. Bedrock returns the exact cached signed response once; changing the challenge or waiting too long invalidates that retry.
+If a response is lost, repeat the immediately previous token with the same challenge during the next heartbeat interval. Bedrock returns the exact cached signed response once; this narrow retry is the sole exception to the one-time challenge rule. Changing the challenge or waiting too long invalidates that retry.
 
 Terminal responses include a `termination_message`. Stop access when the response code reports a terminated, stale, early, revoked, or otherwise invalid session.
 

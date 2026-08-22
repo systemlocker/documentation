@@ -6,13 +6,11 @@ Quicksilver is a production session-authentication API for existing integrations
 
 Quicksilver is planned to be phased out during 2027. Existing integrations can continue to use it for now; new production integrations should use [Bedrock](bedrock.md).
 
-The complete [Quicksilver PDF](https://systemlocker.net/documentation/downloads/quicksilver.pdf) is also available.
-
 ### Initial request
 
 For account authentication, send `POST https://systemlocker.net/quicksilver/init`. For key-only authentication, use `POST https://systemlocker.net/quicksilver/init-mikros`.
 
-`username` and `password` - Required for account authentication.
+`username` and `password` - Required for account authentication. Google accounts use the system-specific password created through Google SSO, not a normal account password.
 
 `key` - Required for key-only authentication instead of account credentials.
 
@@ -29,6 +27,8 @@ For account authentication, send `POST https://systemlocker.net/quicksilver/init
 `init-if` - Optional boolean. Send `true` to append a short-lived Invisible Folder token to a successful initialization response.
 
 An unsuccessful request returns a plain-text value such as `bad u/p`, `bad key`, `paused`, `frozen`, `hwid banned`, `expired key`, `no production`, `outdated`, or `digest`. Treat any unexpected value as a failure.
+
+For a Google account, account initialization can instead return `sso [LINK]`, `ssoexp [LINK]`, or `ssowrong [LINK]`. These are plain-text SSO instructions, not signed Quicksilver responses. Extract the complete URL after the first space, let the customer complete Google sign-in, and retry initialization with the displayed system password. Use the same `username` and `system`; the password works only for that system. See [Google SSO account password](simple-auth.md#google-sso-account-password) for the response meanings and password lifetime.
 
 A successful response is `token|identifier|timestamp:hash`. The first field begins with `TT`; confirm that `identifier` matches the username or key you submitted, validate the timestamp, and verify the SHA-1 hash over the part before the colon.
 
