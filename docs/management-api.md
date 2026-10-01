@@ -1,4 +1,4 @@
-> [← Documentation home](../README.md) · [Simple Auth](simple-auth.md) · [Bedrock](bedrock.md) · [Quicksilver](quicksilver.md) · [Server-side Variables](variables.md) · **Management API**
+> [← Documentation home](../README.md) · [Simple API](simple-auth.md) · [Bedrock](bedrock.md) · [Nightflyer](nightflyer.md) · **Management API** · [Server-side Variables](variables.md) · [SL-HWID](sl-hwid.md) · [Quicksilver](quicksilver.md)
 
 ## Management API
 
@@ -34,7 +34,7 @@ Each credential can make 10 requests per 5 seconds. A rate-limited request retur
 ### Scopes
 
 - `systems.read`, `systems.update`, `systems.delete`
-- `keys.create`, `keys.read`, `keys.update`, `keys.delete`
+- `keys.create`, `keys.read`, `keys.update`, `keys.delete`, `individual_free_trial`
 - `variables.create`, `variables.read`, `variables.update`, `variables.delete`
 - `security.read`
 - `resellers.create`, `resellers.read`, `resellers.update`, `resellers.delete`
@@ -84,14 +84,33 @@ Explicit timestamps can also be Unix seconds. RFC 3339 input must be UTC and end
 
 | Method   | Path                                                    | Purpose                                                                        |
 | -------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `GET`    | `/api/v2/systems/{system}/keys/{licenseKey}`            | Returns redemption status, HWID present, frozen, and all timestamps            |
-| `PATCH`  | `/api/v2/systems/{system}/keys/{licenseKey}`            | Freeze or unfreeze with `{"frozen": true}`.                                    |
+| `GET`    | `/api/v2/systems/{system}/keys/{licenseKey}`            | Returns redemption status, HWID present, freeze state, and all timestamps      |
+| `PATCH`  | `/api/v2/systems/{system}/keys/{licenseKey}`            | Freeze, freeze with compensation, or unfreeze.                                  |
 | `POST`   | `/api/v2/systems/{system}/keys/{licenseKey}/hwid-reset` | Reset one key's HWID.                                                          |
 | `POST`   | `/api/v2/systems/{system}/keys/hwid-reset`              | Reset every HWID in the system.                                                |
 | `POST`   | `/api/v2/systems/{system}/keys/{licenseKey}/time`       | Add time with a positive `seconds` integer. Perpetual keys cannot be extended. |
 | `DELETE` | `/api/v2/systems/{system}/keys/{licenseKey}`            | Permanently delete one key.                                                    |
 
 Adding time to an unredeemed duration-based key extends its future redemption duration without starting its clock.
+
+Send `{"frozen":true}` for an ordinary freeze. To return elapsed freeze time to a redeemed key with a fixed expiry when it is later changed to any other freeze state or unfrozen, send `{"frozen":true,"compensate":true}`. An unredeemed key has no running expiry, so that request falls back to an ordinary freeze and does not create a compensation record. The response keeps the compatible `frozen` boolean and adds `freeze_type`, which is `standard`, `compensated`, or `null`. `compensate` must be a boolean and is valid only while `frozen` is `true`.
+
+### Individual free trials
+
+The `individual_free_trial` scope creates a single trial key that can be used only once per HWID within the system. It is separate from the ordinary `free_trial` option, whose existing behavior is unchanged.
+
+Create one with `POST /api/v2/systems/{system}/individual-free-trials`. It accepts the same `notes`, `format`, `reseller`, and `expiry` fields as key creation, plus an optional `identifier` string of up to 256 characters:
+
+```json
+{
+    "identifier": "discord-user-123",
+    "expiry": { "type": "after_redemption", "seconds": 2592000 }
+}
+```
+
+An identifier is unique within its system. Check it first with `GET /api/v2/systems/{system}/individual-free-trials/identifier-availability?identifier=discord-user-123`, which returns `{"data":{"available":true}}`. Set, replace, or clear it later with `PATCH /api/v2/systems/{system}/individual-free-trials/{licenseKey}` and `{"identifier":"..."}` or `{"identifier":null}`. We recommend using identifiers for a value like the user's Discord User ID.
+
+Individual-trial HWIDs cannot be reset by the user or API. Deleting the key also removes its individual-trial registry entry.
 
 ### Server-side variables
 

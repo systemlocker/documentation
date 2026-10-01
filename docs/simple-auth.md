@@ -1,12 +1,12 @@
-> [← Documentation home](../README.md) · **Simple Auth** · [Bedrock](bedrock.md) · [Quicksilver](quicksilver.md) · [Server-side Variables](variables.md) · [Management API](management-api.md)
+> [← Documentation home](../README.md) · **Simple API** · [Bedrock](bedrock.md) · [Nightflyer](nightflyer.md) · [Management API](management-api.md) · [Server-side Variables](variables.md) · [SL-HWID](sl-hwid.md) · [Quicksilver](quicksilver.md)
 
-## Simple Auth
+## Simple API
 
-Simple Auth provides a direct answer to each authentication request. Choose Goliath when customers sign in with a System Locker account, or Mikros when they enter a license key. Both endpoints accept HTTP POST requests over HTTPS.
+The Simple API provides a direct answer to each authentication request. Use it when the licensing code runs on a trusted server, such as a central service your users connect to. It supports both account and license-key authentication through separate HTTP POST endpoints over HTTPS.
 
-### Goliath
+### Account authentication
 
-Goliath is the default account-based API. Send requests to `https://systemlocker.net/auth/goliath`.
+Send account-authentication requests to `https://systemlocker.net/auth/goliath`.
 
 #### Request body
 
@@ -58,9 +58,9 @@ Google accounts use a system-specific password instead of a normal System Locker
 
 In each case, extract the complete URL after the first space and let the customer open it. After they sign in with Google, the page displays a password for that system. Submit that password as `password` with the same `username` and `system`, then retry the original request. The password expires after 180 days, works only for the system named in the link, and is replaced when the customer completes Google sign-in again. Do not reuse it for another system or write it to logs.
 
-### Mikros
+### License-key authentication
 
-Mikros is the license-key API and is available on every plan. Send requests to `https://systemlocker.net/auth/mikros`.
+Send license-key requests to `https://systemlocker.net/auth/mikros`. This route is available on every plan.
 
 #### Request body
 

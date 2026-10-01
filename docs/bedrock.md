@@ -1,8 +1,8 @@
-> [← Documentation home](../README.md) · [Simple Auth](simple-auth.md) · **Bedrock** · [Quicksilver](quicksilver.md) · [Server-side Variables](variables.md) · [Management API](management-api.md)
+> [← Documentation home](../README.md) · [Simple API](simple-auth.md) · **Bedrock** · [Nightflyer](nightflyer.md) · [Management API](management-api.md) · [Server-side Variables](variables.md) · [SL-HWID](sl-hwid.md) · [Quicksilver](quicksilver.md)
 
 ## Bedrock
 
-Bedrock is the recommended production authentication API for all new integrations. Supporting account-based and key-only authentication, cryptographically-signed responses, and endless sessions, Bedrock is our most secure offering yet. It requires a paid developer plan with production access.
+Bedrock is the session authentication API for connected software running on user-controlled hardware. Prefer the Simple API when the licensing check runs on a trusted central server, and use Nightflyer when the customer application must keep working offline. Bedrock supports account and license-key authentication, cryptographically signed responses, and sessions that stay active while the application is running. It requires a paid developer plan with production access.
 
 The Bedrock C++ reference implementation is the fastest way to get started. It includes a C++20 client, integration instructions, and full support for server-side variables and Invisible Folder-backed downloads. Embed the library's source in your project when integrating Bedrock; this keeps the client bundled with the rest of your code, allowing the strongest obfuscation and security layers to be applied.
 
@@ -30,6 +30,12 @@ Send either `username` and `password` for account authentication, or `key` for k
 
 `X-Bedrock-Key-Id` - Optional request header identifying the active signing key the client expects. Omit it to use the system's current active key.
 
+### Hardware identifiers and SL-HWID
+
+The current Bedrock clients include [SL-HWID](sl-hwid.md), a fault-tolerant hardware identifier that combines up to 14 factors instead of relying on a single serial number. It keeps the identifier stable through ordinary hardware drift while making simple one-value spoofing less useful. The standalone [SL-HWID C++ and .NET library](https://github.com/systemlocker/SL-HWID) is also available for integrations outside System Locker.
+
+In version 1.0.0 and later, the .NET, Go, Node.js, and Python Bedrock clients use SL-HWID by default. The C++ client keeps device locking disabled by default; set its `hwid` configuration value to an empty string to opt in. When moving an existing system to SL-HWID, reset existing HWIDs before affected customers authenticate, because the new identifiers will not match old claims. A custom `hwid` value still takes precedence; use `1` only when deliberately disabling device locking. See the relevant Bedrock client README for language-specific configuration.
+
 ### Initialization response
 
 The response body is a base64url transport value containing an Ed25519 signature followed by the exact JSON payload. Verify the signature with the public key you distribute with your application before reading or trusting the JSON. TLS still provides confidentiality.
@@ -39,6 +45,8 @@ Successful responses have `response_code` `OK` or `OUTDATED`, include `authed: t
 When requested, successful responses also include `invisible_folder_token` and the `variables` map. Full usernames and license keys are never returned.
 
 Check `response_code` rather than assuming any signed response authorizes access. Common values include `INVALID_CREDENTIALS`, `INVALID_KEY`, `HWID_MISMATCH`, `EXPIRED_KEY`, `PROGRAM_DIGEST_MISMATCH`, and `PRODUCTION_AUTH_UNAVAILABLE`.
+
+Requests may also receive HTTP `429` with a `Retry-After` header. Wait for the indicated delay before retrying. A rate-limit response does not authorize access and may not contain a signed Bedrock payload.
 
 `GOOGLE_SSO_REQUIRED` is a signed, non-authorizing response for a Google account. It includes `sso_url`. After signature verification, open that URL for the customer. When they complete Google sign-in, the page displays a password for the requested system. Submit that value as `password` and begin a new initialization with a fresh challenge. The password is system-specific, expires after 180 days, and is replaced when the customer signs in through the SSO link again.
 

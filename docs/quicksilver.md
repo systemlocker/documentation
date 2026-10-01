@@ -1,4 +1,4 @@
-> [← Documentation home](../README.md) · [Simple Auth](simple-auth.md) · [Bedrock](bedrock.md) · **Quicksilver** · [Server-side Variables](variables.md) · [Management API](management-api.md)
+> [← Documentation home](../README.md) · [Simple API](simple-auth.md) · [Bedrock](bedrock.md) · [Nightflyer](nightflyer.md) · [Management API](management-api.md) · [Server-side Variables](variables.md) · [SL-HWID](sl-hwid.md) · **Quicksilver**
 
 ## Quicksilver
 
